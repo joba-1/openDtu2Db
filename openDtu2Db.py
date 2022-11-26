@@ -22,8 +22,9 @@ mqtt_broker = "job4"   # hostname of your mqtt broker
 influx_host = "job4"   # hostname of your influx database
 influx_db = "openDtu"       # change if you want a different name
 
-influx_api = "1.0"     # changes if new version of this script sends different data
+influx_api = "2.0"     # changes if new version of this script sends different data
                        # increased minor: added new data, increased major: also changed existing data
+                       # history: 1.0: all values were strings
 
 influx_url = f"http://{influx_host}:8086/write?db={influx_db}"
 
@@ -123,10 +124,17 @@ def dict2string(d):
     return ",".join([f"{key}={value}" for key, value in sorted(d.items())])
 
 
+def influxField(v):
+    if isinstance(v, str):
+        return f'"{v}"'
+    else:
+        return v
+
+
 def dict2quotedstring(d):
-    """ return comma separated key=value items from dictionary
+    """ return comma separated key=value items from dictionary and quote string values
     """
-    return ",".join([f'{key}="{value}"' for key, value in sorted(d.items())])
+    return ",".join([f'{key}={influxField(value)}' for key, value in sorted(d.items())])
 
 
 def on_connect(mqtt_client, userdata, flags, rc):
