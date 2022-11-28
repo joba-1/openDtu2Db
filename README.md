@@ -74,7 +74,7 @@ The script can be used by the systemd service so the script does its job wheneve
 ## Configuration
 
 The script uses reasonable defaults for a single DTU if mqtt and influx is running on the same host and no user or password is needed.
-If needed, configuration files OpenDtu2Db.ini can be provided in '/etc', '/etc/TOPIC', '~/.config', '~/.config/TOPIC', the working directory '.' and './TOPIC'.
+If needed, configuration files OpenDtu2Db.ini can be provided in '/etc', '/etc/TOPIC', '\~/.config', '\~/.config/TOPIC', the working directory '.' and './TOPIC'.
 Settings are accumulated, the last one wins (see python configparser for details).
 OpenDtu2Db_sample.ini is a sample file with all available parameters
 
