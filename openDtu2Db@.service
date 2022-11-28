@@ -1,0 +1,11 @@
+[Unit]
+Description=OpenDTU service for topic %i
+
+[Service]
+Type=simple
+ExecStart=/home/joachim/bin/openDtu2Db.sh %i
+WorkingDirectory=/home/joachim
+User=joachim
+
+[Install]
+WantedBy=multi-user.target
