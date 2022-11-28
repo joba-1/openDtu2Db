@@ -17,15 +17,19 @@ from datetime import datetime as dt
 import copy
 
 
-mqtt_broker = "job4"   # hostname of your mqtt broker
-influx_host = "job4"   # hostname of your influx database
-influx_db = "openDtu"       # change if you want a different name
+mqtt_broker = "localhost"  # hostname of your mqtt broker
+influx_host = "localhost"  # hostname of your influx database
+influx_db = "openDtu"      # change if you want a different name
 
-influx_api = "2.1"     # changes if new version of this script sends different data
-                       # increased minor: added new data, increased major: also changed existing data
-                       # history: 1.0: all values were strings
+influx_api = "2.1"  # changes if new version of this script sends different data
+                    # increased minor: added new data, increased major: also changed existing data
+                    # history: 
+                    # * 1.0: all values are strings
+                    # * 2.0: panel names required (or only last panel is updated)
+                    # * 2.1: if panel names are empty, panel numbers are used
 
 influx_url = f"http://{influx_host}:8086/write?db={influx_db}"
+
 
 inverters = {}  # { id: name }
 panels = {}     # { (id, num): name }
