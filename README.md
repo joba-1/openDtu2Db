@@ -20,6 +20,7 @@ The script can be used by the systemd service so the script does its job wheneve
     ```
     mosquitto_sub -v -t 'OpenDTU1/#'
     ```
+* Configure OpenDTU to use a unique name for each inverter string. For different inverters you can reuse string names.
 
 ## Install
 
