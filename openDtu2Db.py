@@ -14,7 +14,6 @@ import json
 import requests
 import paho.mqtt.client as mqtt
 from datetime import datetime as dt
-from datetime import timedelta as td
 import copy
 
 
@@ -22,7 +21,7 @@ mqtt_broker = "job4"   # hostname of your mqtt broker
 influx_host = "job4"   # hostname of your influx database
 influx_db = "openDtu"       # change if you want a different name
 
-influx_api = "2.0"     # changes if new version of this script sends different data
+influx_api = "2.1"     # changes if new version of this script sends different data
                        # increased minor: added new data, increased major: also changed existing data
                        # history: 1.0: all values were strings
 
@@ -56,9 +55,11 @@ class PostTimer(Timer):
                         tag_string = dict2string(tags_dict)
                         value_string = dict2quotedstring(values)
                         payload = f"{measurement},{tag_string} {value_string}"
-                        response = requests.post(url=influx_url, data=payload)
-                        if response.status_code < 200 or response.status_code > 299:
-                            print(f"influx {influx_host} code {response.status_code} for '{response.text}' with '{payload}'")
+                        try:
+                            response = requests.post(url=influx_url, data=payload)
+                            response.raise_for_status()
+                        except Exception as e:
+                            print(f"influx exception '{str(e)}'")
 
         self.set_clean()
 
@@ -151,8 +152,6 @@ def on_message(mqtt_client, userdata, msg):
         topic = msg.topic.split("/")
         if len(topic) < 3: return
 
-        # print(f"{topic}: {message}")
-
         if topic[1] == "dtu":
             if topic[2] == "rssi":
                 timer.set_value("signal", (topic[0],), topic[2], message)
@@ -165,7 +164,10 @@ def on_message(mqtt_client, userdata, msg):
                     message = str(timer.start_time)
                 timer.set_value(topic[1], (topic[0],), topic[2], message)
         elif topic[2] == "name":
-            inverters[topic[1]] = message  # to later translate serial to name
+            if message is None or message == "":
+                inverters[topic[1]] = hash(topic[1]) & 0xffff  # no name, use 16bit hash of serial
+            else:
+                inverters[topic[1]] = message  # to later translate serial to name
         else:
             inverter = inverters.get(topic[1])
             if inverter is not None and len(topic) == 4:
@@ -176,7 +178,10 @@ def on_message(mqtt_client, userdata, msg):
                 else:
                     key = (inverter, topic[2])
                     if topic[3] == "name":
-                        panels[key] = message  # to later translate (inv, panel_num) to name
+                        if message is None or message == "":
+                            panels[key] = topic[2]  # no name, use number
+                        else:
+                            panels[key] = message  # to later translate (inv, panel_num) to name
                     else:
                         panel = panels.get(key)
                         if panel is not None:
