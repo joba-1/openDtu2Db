@@ -12,7 +12,7 @@ from threading import Timer
 import sys
 import json
 import requests
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as paho_mqtt
 from datetime import datetime as dt
 import copy
 from configparser import ConfigParser
@@ -201,11 +201,11 @@ if __name__ == "__main__":
     config['DEFAULT'] = {
         'host': 'localhost',
         'user': 'openDtu2Db',
-        'pass': None }
+        'pass': '' }
     config['mqtt'] = {}
-    config['mqtt']['port'] = 1883
+    config['mqtt']['port'] = '1883'
     config['influx'] = {}
-    config['influx']['port'] = 8086
+    config['influx']['port'] = '8086'
     config['influx']['db'] = 'openDtu'
 
     configs = ['/etc', '~/.config', '.']
@@ -215,17 +215,18 @@ if __name__ == "__main__":
     mqtt_topic += '/#'
 
     influx = config['influx']
-    influx_url = f"http://{influx['host']}:influx['port']/write?db={influx['db']}&u={influx['user']}
-    if influx['pass'] is not None
+    influx_url = f"http://{influx['host']}:{influx['port']}/write?db={influx['db']}&u={influx['user']}"
+    if influx['pass'] is not None:
         influx_url += f"&p={influx['pass']}"
     print(f"start openDTU gateway to InfluxDB {influx['db']}@{influx['host']}")
 
     mqtt = config['mqtt']
-    mqtt_client = mqtt.Client()
+    mqtt_client = paho_mqtt.Client()
     mqtt_client.username_pw_set(username=mqtt['user'],password=mqtt['pass'])
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
-    mqtt_client.connect(mqtt_broker)
+    print('mh', mqtt['host'])
+    mqtt_client.connect(mqtt['host'])
 
     timer = PostTimer()
 
