@@ -225,7 +225,6 @@ if __name__ == "__main__":
     mqtt_client.username_pw_set(username=mqtt['user'],password=mqtt['pass'])
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
-    print('mh', mqtt['host'])
     mqtt_client.connect(mqtt['host'])
 
     timer = PostTimer()
