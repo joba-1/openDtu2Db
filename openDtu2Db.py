@@ -12,14 +12,11 @@ from threading import Timer
 import sys
 import json
 import requests
-import paho.mqtt.client as mqtt
+import paho.mqtt.client as paho_mqtt
 from datetime import datetime as dt
 import copy
+from configparser import ConfigParser
 
-
-mqtt_broker = "localhost"  # hostname of your mqtt broker
-influx_host = "localhost"  # hostname of your influx database
-influx_db = "openDtu"      # change if you want a different name
 
 influx_api = "2.1"  # changes if new version of this script sends different data
                     # increased minor: added new data, increased major: also changed existing data
@@ -27,9 +24,6 @@ influx_api = "2.1"  # changes if new version of this script sends different data
                     # * 1.0: all values are strings
                     # * 2.0: panel names required (or only last panel is updated)
                     # * 2.1: if panel names are empty, panel numbers are used
-
-influx_url = f"http://{influx_host}:8086/write?db={influx_db}"
-
 
 inverters = {}  # { id: name }
 panels = {}     # { (id, num): name }
@@ -143,7 +137,7 @@ def dict2quotedstring(d):
 
 
 def on_connect(mqtt_client, userdata, flags, rc):
-    print(f"connected to mqtt broker {mqtt_broker} with result code {rc}")
+    print(f"connected to mqtt broker {config['mqtt']['host']} with result code {rc}")
     mqtt_client.subscribe(mqtt_topic)  # wait for openDTU messages
     print(f"subscribed to mqtt topic {mqtt_topic}")
 
@@ -200,14 +194,38 @@ if __name__ == "__main__":
         print(f"syntax: {sys.argv[0]} mqtt_topic")
         exit(1)
 
-    mqtt_topic = f"{sys.argv[1]}/#"
+    mqtt_topic = sys.argv[1]
 
-    print(f"start openDTU gateway to InfluxDB {influx_db}@{influx_host}")
+    config = ConfigParser()
 
-    mqtt_client = mqtt.Client()
+    config['DEFAULT'] = {
+        'host': 'localhost',
+        'user': 'openDtu2Db',
+        'pass': '' }
+    config['mqtt'] = {}
+    config['mqtt']['port'] = '1883'
+    config['influx'] = {}
+    config['influx']['port'] = '8086'
+    config['influx']['db'] = 'openDtu'
+
+    configs = ['/etc', '~/.config', '.']
+    configs = [base + d + '/OpenDtu2Db.ini' for base in ['', mqtt_topic] for d in configs]
+    config.read(configs)
+
+    mqtt_topic += '/#'
+
+    influx = config['influx']
+    influx_url = f"http://{influx['host']}:{influx['port']}/write?db={influx['db']}&u={influx['user']}"
+    if influx['pass'] is not None:
+        influx_url += f"&p={influx['pass']}"
+    print(f"start openDTU gateway to InfluxDB {influx['db']}@{influx['host']}")
+
+    mqtt = config['mqtt']
+    mqtt_client = paho_mqtt.Client()
+    mqtt_client.username_pw_set(username=mqtt['user'],password=mqtt['pass'])
     mqtt_client.on_connect = on_connect
     mqtt_client.on_message = on_message
-    mqtt_client.connect(mqtt_broker)
+    mqtt_client.connect(mqtt['host'])
 
     timer = PostTimer()
 
